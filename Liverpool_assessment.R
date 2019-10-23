@@ -101,6 +101,7 @@ top300 = L_lsoa %>% top_n(300, bicycle)
 plot(L$geometry)
 plot(top300["bicycle"], add = TRUE, col = "green", vwlwd = top300$bicycle)
 
+#propensity to cycle (Go Dutch, Govt. and Gender Equality)
 L_msoa$newcolumn <- NA
 library(tidyverse)
 colnames(L_msoa)
@@ -124,7 +125,6 @@ L_msoa$pcycle_godutch = uptake_pct_godutch(
 plot(L$geometry)
 plot(subset(L_msoa["pcycle_godutch"], pcycle_godutch >= 30), add = TRUE)
 
-plot(subset(L_msoa["pcycle_godutch"], pcycle_godutch >= 30))   
 
 pct_uptake_godutch("liverpool-city-region")
 
@@ -138,6 +138,3 @@ plot(r)
 r_many <- line2route(flowlines_sf[2:9, ], route_osrm, time_delay = 1)
 plot(cents)
 plot(r_many$geometry)
-
-
-     
