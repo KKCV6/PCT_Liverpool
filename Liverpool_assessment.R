@@ -55,9 +55,6 @@ tmap_mode("view")
 tm_shape(bicycle) +
   tm_lines("Percentage Cycling", palette = "RdYlBu", lwd = "bicycle", scale = 9)
 
-remove(bicycle300)
-
-
 # Create car dependent desire lines
 car_dependent = lines_all %>% 
   mutate(`Percent Drive` = (car_driver) / all * 100) %>% 
@@ -83,9 +80,10 @@ library(tidyverse)
 L_original_msoa = get_pct_lines("liverpool-city-region")
 L_msoa = L_original_msoa %>% 
   select(geo_code1, geo_code2, all, bicycle, car_driver, rf_avslope_perc, rf_dist_km)
-L_msoa %>% filter(bicycle > 46)
+over46 <- L_msoa %>% filter(bicycle > 46)
 plot(L$geometry)
 plot(MSOA_5["bicycle"], add = TRUE, col = "red")
+qtm(MSOA_5)
 
 st_length(MSOA_5[4,4])
 
@@ -102,6 +100,7 @@ plot(L$geometry)
 plot(top300["bicycle"], add = TRUE, col = "green", vwlwd = top300$bicycle)
 
 #propensity to cycle (Go Dutch, Govt. and Gender Equality)
+#scenarios of change
 L_msoa$newcolumn <- NA
 library(tidyverse)
 colnames(L_msoa)
@@ -122,12 +121,15 @@ L_msoa$pcycle_godutch = uptake_pct_godutch(
   gradient = L_msoa$rf_avslope_perc
 ) * 100 + L_msoa$pcycle
 
+#subset of cycle routes, greater than 30 people
 plot(L$geometry)
 plot(subset(L_msoa["pcycle_godutch"], pcycle_godutch >= 30), add = TRUE)
 
 
 pct_uptake_godutch("liverpool-city-region")
 
+#Routing
+#find routes assocaited with the most cycles desire line in Liverpool
 library(stplanr)
 L_top = L_msoa %>% 
   top_n(n = 1, wt = bicycle)
@@ -135,8 +137,20 @@ from <- c(-2.999, 53.651) # geo_code1("E02001432")
 to <- c(-2.988, 53.635) # geo_code("E02001436")
 r <- route_osrm(from, to)
 plot(r)
-r_many <- line2route(flowlines_sf[2:9, ], route_osrm, time_delay = 1)
+r_many <- line2route(LSOA_5[1:5, ], route_osrm, time_delay = 1)
+qtm(r_many)
+
+test1 <- flowlines_sf
+
 plot(cents)
 plot(r_many$geometry)
 
-library(citr)
+qtm(r_many)
+qtm(L_msoa)
+
+qtm(r)
+
+?route_osrm # only provides routing for cars
+# required to use CycleStreet
+
+# line2route{stplanr}
