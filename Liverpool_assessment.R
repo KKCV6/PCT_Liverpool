@@ -138,3 +138,5 @@ plot(r)
 r_many <- line2route(flowlines_sf[2:9, ], route_osrm, time_delay = 1)
 plot(cents)
 plot(r_many$geometry)
+
+library(citr)
