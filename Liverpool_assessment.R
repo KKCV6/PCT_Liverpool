@@ -28,11 +28,12 @@ remotes::install_cran(pkgs)
 source("https://raw.githubusercontent.com/ITSLeeds/TDS/master/code-r/setup.R") 
 
 #cycle streets API Key
-cyclestreets_api_key("64de24d7c380c043", install = TRUE)
 
-Sys.getenv("CYCLESTREETS_KEY")
+API_key = "64de24d7c380c043"
+
+Sys.getenv("API_key")
 Sys.setenv(CYCLESTREETS_KEY = "64de24d7c380c043")
-Sys.getenv("CYCKESTREETS_KEY")
+Sys.getenv("CYCLESTREETS_KEY")
 
 #install Liverpool data and geometry
 
@@ -128,12 +129,11 @@ st_length(MSOA_5[4,4])
 
 L_original_lsoa = get_pct_lines("liverpool-city-region", geography = "lsoa")
 L_lsoa = L_original_lsoa %>% 
-  select(geo_code1, geo_code2, all, bicycle, car_driver, rf_avslope_perc, rf_dist_km)
-LSOA_5 = L_lsoa %>% filter(bicycle > 9)
+  select(geo_code1, geo_code2, all, bicycle, car_driver, rf_avslope_perc, rf_dist_km, govtarget_slc, govnearmkt_slc, gendereq_slc, dutch_slc, ebike_slc)
+LSOA_300 = L_lsoa %>% 
+  top_n(n = 300, wt = bicycle)
 plot(L$geometry)
 plot(LSOA_5["bicycle"], add = TRUE, col = "red")
-
-
 
 #subset of cycle routes, greater than 30 people
 plot(L$geometry)
@@ -153,6 +153,8 @@ r <- route_osrm(from, to)
 plot(r)
 r_many <- line2route(LSOA_5[1:5, ], route_osrm, time_delay = 1)
 qtm(r_many)
+
+#difference between gradient and distance
 
 distances = 1:20
 hilliness = 0:5
@@ -181,3 +183,85 @@ ggplot(uptake_df) +
     colour = as.character(hilliness)
   )) +
   scale_color_discrete("Gradient (%)")
+
+#convert top 300 into routes
+desire_300 <- line2route(LSOA_300, route_osrm, time_delay = 1)
+qtm(desire_lines)
+warnings()
+
+#convert top route
+top_desire_line = L_original_lsoa %>% top_n(1, bicycle)
+top_desire_line <- line2route(top_desire_line, route_osrm, time_delay = 1)
+qtm(top_desire_line)
+
+#convert top 5 routes lSOA
+top_5 = stplanr::line2route(desire_5, route_fun = stplanr::route_cyclestreet)
+qtm(top_5)
+
+#convert top 50 routes lSOA
+top_50 = L_original_lsoa %>% top_n(50, bicycle)
+
+cyclestreet_50 = stplanr::line2route(top_50, route_fun = stplanr::route_cyclestreet)
+qtm(cyclestreet_50)
+
+
+#estimate cycling uptake govtarget top 5
+#r_many = desire lines
+top_5$uptakegovtarget = uptake_pct_govtarget(distance = top_5$length, gradient = top_5$av_incline)
+#> Distance assumed in m, switching to km
+top_5$bicycle_govtarget = desire_5$bicycle +
+  round(top_5$uptake * desire_5$all)
+
+sum(top_5$bicycle_govtarget) / sum(desire_5$bicycle)
+
+#estimate cycling uptake godutch top 5
+#r_many = desire lines
+top_5$uptakegodutch = uptake_pct_godutch(distance = top_5$length, gradient = top_5$av_incline)
+#> Distance assumed in m, switching to km
+top_5$bicycle_godutch = desire_5$bicycle +
+  round(top_5$uptake * desire_5$all)
+
+sum(top_5$bicycle_govtarget) / sum(desire_5$bicycle)
+
+#cycling uptake gove target top 50
+cyclestreet_50$uptake = uptake_pct_govtarget(distance = cyclestreet_50$length, gradient = cyclestreet_50$av_incline)
+#> Distance assumed in m, switching to km
+cyclestreet_50$bicycle_govtarget = top_50$bicycle +
+  round(cyclestreet_50$uptake * top_50$all)
+
+sum(cyclestreet_50$bicycle_govtarget) - sum(top_50$bicycle)
+  
+
+#comparison between the data
+sum(desire_5$bicycle) / sum(desire_5$all)
+sum(desire_5$dutch_slc) / sum(desire_5$all)
+sum(desire_5$govtarget_slc) -  sum(desire_5$bicycle)
+sum(desire_5$gendereq_slc) / sum(desire_5$all)
+sum(desire_5$ebike_slc) / sum(desire_5$all)
+
+
+
+sum(top300$bicycle) / sum(top300$all)
+sum(top300$dutch_slc) / sum(top300$all)
+sum(top300$govtarget_slc) / sum(top300$all)
+sum(top300$gendereq_slc) / sum(top300$all)
+sum(top300$ebike_slc) / sum(top300$all)
+
+sum(L_original_lsoa$bicycle) / sum(L_original_lsoa$all)
+sum(L_original_lsoa$dutch_slc) / sum(L_original_lsoa$all)
+
+#prioritise infras
+library(Rnets)
+library(pbapply)
+rnet_5 = stplanr::overline2(tpo_5, attrib = c("bicycle", "govtarget_slc"))
+lwd = rnet$govtarget_slc / mean(rnet$govtarget_slc)
+
+rnet_100 = stplanr::overline2(top_desire_line_100, attrib = c("bicycle", "govtarget_slc"))
+lwd = rnet_100$govtarget_slc / mean(rnet$govtarget_slc)
+
+plot (L$geometry)
+plot(rnet["govtarget_slc"], lwd = lwd, add = TRUE)
+
+mapview::mapview(rnet, zcol = "govtarget_slc", lwd = lwd * 2)
+mapview::mapview(rnet_100, zcol = "govtarget_slc", lwd = lwd * 2)
+    
