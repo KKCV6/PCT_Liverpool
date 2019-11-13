@@ -206,22 +206,29 @@ qtm(cyclestreet_50)
 
 
 #estimate cycling uptake govtarget top 5
-#r_many = desire lines
+
 top_5$uptakegovtarget = uptake_pct_govtarget(distance = top_5$length, gradient = top_5$av_incline)
 #> Distance assumed in m, switching to km
 top_5$bicycle_govtarget = desire_5$bicycle +
   round(top_5$uptake * desire_5$all)
 
-sum(top_5$bicycle_govtarget) / sum(desire_5$bicycle)
+sum(top_5$bicycle_govtarget) - sum(desire_5$bicycle)
+
+sum(top_5$bicycle_govtarget) / sum(desire_5$all)
+sum(desire_5$bicycle) / sum(desire_5$all)
+#18.9% to 26.6% (GovTarget)
 
 #estimate cycling uptake godutch top 5
-#r_many = desire lines
+
 top_5$uptakegodutch = uptake_pct_godutch(distance = top_5$length, gradient = top_5$av_incline)
 #> Distance assumed in m, switching to km
 top_5$bicycle_godutch = desire_5$bicycle +
   round(top_5$uptake * desire_5$all)
 
-sum(top_5$bicycle_govtarget) / sum(desire_5$bicycle)
+
+sum(desire_5$govtarget_slc) - sum(desire_5$bicycle)
+
+
 
 #cycling uptake gove target top 50
 cyclestreet_50$uptake = uptake_pct_govtarget(distance = cyclestreet_50$length, gradient = cyclestreet_50$av_incline)
