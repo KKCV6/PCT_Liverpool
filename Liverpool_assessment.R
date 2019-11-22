@@ -25,7 +25,7 @@ library(dplyr)
 remotes::install_cran(pkgs)
 # remotes::install_github("ITSLeeds/pct")
 
-source("https://raw.githubusercontent.com/ITSLeeds/TDS/master/code-r/setup.R") 
+source("https://raw.githubusercontent.com/ITSLeeds/TDS/master/code-r/setup.R")
 
 #cycle streets API Key
 
@@ -34,6 +34,12 @@ API_key = "64de24d7c380c043"
 Sys.getenv("API_key")
 Sys.setenv(CYCLESTREETS_KEY = "64de24d7c380c043")
 Sys.getenv("CYCLESTREETS_KEY")
+
+#blogdown
+install.packages("blogdown")
+blogdown::install_hugo()
+#https://bookdown.org/yihui/blogdown/a-quick-example.html
+
 
 #install Liverpool data and geometry
 
@@ -48,7 +54,7 @@ plot(lines_all$geometry[lines_all$all > 500], col = "red", add = TRUE)
 #1 create cycling and driver desire lines (less than 5 km)
 tmap_mode("view")
 
-  #1abicycle desire lines
+  #1abicycle desire lines # interactive map
 
 bicycle = lines_all %>%
   mutate('Percentage Cycling' = (bicycle) / all * 100) %>%
@@ -73,46 +79,6 @@ plot(L)
 #plot highest cycling ptc zone
 plot (L$geometry)
 plot(L[62,"bicycle"], add = TRUE, col = "purple")
-
-#2 top 300 cycle routes
-
-top300 = L_original_lsoa %>% top_n(300, bicycle)
-
-  #2a existing top 300 routes cycled 
-plot(L$geometry)
-plot(top300["bicycle"], add = TRUE, col = "green", vwlwd = top300$bicycle)
-
-  #2b top 300 routes cycles GoDutch
-
-plot(L$geometry)
-plot(top300["dutch_slc"], add = TRUE, col = "green", vwlwd = top300$dutch_slc)
-
-
-
-#propensity to cycle (Go Dutch, Govt. and Gender Equality)
-#scenarios of change
-L_msoa$newcolumn <- NA
-library(tidyverse)
-colnames(L_msoa)
-names(L_msoa)[names(L_msoa) == "newcolumn"] <- "pcycle"
-
-L_msoa$pcycle = L_msoa$bicycle / L_msoa$all * 100
-plot(L$geometry)
-plot(L_msoa["pcycle"], add = TRUE, palette = "Purples", breaks = c(2, 4, 6, 10), vwlwd = L_msoa$bicycle)
-
-
-Liverpoolroutenetwork = get_pct_rnet("liverpool-city-region")
-plot(Liverpoolroutenetwork["bicycle"])
-plot(Liverpoolroutenetwork["dutch_slc"])
-plot(Liverpoolroutenetwork["gendereq_slc"])
-plot(Liverpoolroutenetwork["ebike_slc"])
-
-L_msoa$euclidean_distance = as.numeric(sf::st_length(L_msoa))
-L_msoa$pcycle_godutch = uptake_pct_godutch(
-  distance = L_msoa$rf_dist_km,
-  gradient = L_msoa$rf_avslope_perc
-) * 100 + L_msoa$pcycle
-
 
 # Aim: get top 5 cycle routes
 library(tidyverse)
@@ -142,17 +108,97 @@ plot(subset(L_msoa["pcycle_godutch"], pcycle_godutch >= 30), add = TRUE)
 
 pct_uptake_godutch("liverpool-city-region")
 
-#Routing
-#find routes assocaited with the most cycles desire line in Liverpool
-library(stplanr)
-L_top = L_msoa %>% 
-  top_n(n = 1, wt = bicycle)
-from <- c(-2.999, 53.651) # geo_code1("E02001432")
-to <- c(-2.988, 53.635) # geo_code("E02001436")
-r <- route_osrm(from, to)
-plot(r)
-r_many <- line2route(LSOA_5[1:5, ], route_osrm, time_delay = 1)
-qtm(r_many)
+
+#propensity to cycle (Go Dutch, Govt. and Gender Equality)
+#scenarios of change
+library(tidyverse)
+L_msoa$pcycle = L_msoa$bicycle / L_msoa$all * 100
+plot(L$geometry)
+plot(L_msoa["pcycle"], add = TRUE, palette = "Purples", breaks = c(2, 4, 6, 10), vwlwd = L_msoa$bicycle)
+
+
+Liverpoolroutenetwork = get_pct_rnet("liverpool-city-region")
+plot(Liverpoolroutenetwork["bicycle"])
+plot(Liverpoolroutenetwork["dutch_slc"])
+plot(Liverpoolroutenetwork["gendereq_slc"])
+plot(Liverpoolroutenetwork["ebike_slc"])
+
+L_msoa$euclidean_distance = as.numeric(sf::st_length(L_msoa))
+L_msoa$pcycle_godutch = uptake_pct_godutch(
+  distance = L_msoa$rf_dist_km,
+  gradient = L_msoa$rf_avslope_perc
+) * 100 + L_msoa$pcycle
+
+#top 5 routes cycled and routes via CycleStreet - LSOA
+
+Top5_existing = L_original_lsoa %>% top_n(5, bicycle)
+Top5_existing_route = stplanr::line2route(Top5_existing, route_fun = stplanr::route_cyclestreet)
+
+Top5_godutch = L_original_lsoa %>% top_n(5, dutch_slc)
+Top5_godutch_route = stplanr::line2route(Top5_godutch, route_fun = stplanr::route_cyclestreet)
+
+Top5_ebikes = L_original_lsoa %>% top_n(5, ebike_slc)
+Top5_ebikes_route = stplanr::line2route(Top5_ebikes, route_fun = stplanr::route_cyclestreet)
+
+Top5_gendereq = L_original_lsoa %>% top_n(5, gendereq_slc)
+Top5_gendereq_route = stplanr::line2route(Top5_gendereq, route_fun = stplanr::route_cyclestreet)
+
+Top5_govtarget = L_original_lsoa %>% top_n(5, govtarget_slc)
+Top5_govtarget_route = stplanr::line2route(Top5_govtarget, route_fun = stplanr::route_cyclestreet)
+
+Top5_govnearmkt = L_original_lsoa %>% top_n(5, govnearmkt_slc)
+Top5_govnearmkt_route = stplanr::line2route(Top5_govnearmkt, route_fun = stplanr::route_cyclestreet)
+
+tmap_mode("view")
+
+qtm(Top5_existing_route)
+
+
+#estimate cycling uptake govtarget (top 5)
+
+Top5_existing_route$uptakegovtarget = uptake_pct_govtarget(distance = Top5_existing_route$length, gradient = Top5_existing_route$av_incline)
+Top5_existing_route$bicycle_govtarget = Top5_existing$bicycle +
+  round(Top5_existing_route$uptakegovtarget * Top5_existing$all)
+
+sum(Top5_existing_route$bicycle_govtarget) - sum(Top5_existing$bicycle)
+
+sum(Top5_existing_route$bicycle_govtarget) / sum(Top5_existing$all)
+sum(Top5_existing$bicycle) / sum(Top5_existing$all)
+#18.9% to 26.6% (GovTarget Existing) additional 21 people cycling
+
+#estimate cycling uptake go dutch (top 5)
+
+Top5_existing_route$uptakegodutch = uptake_pct_godutch(distance = Top5_existing_route$length, gradient = Top5_existing_route$av_incline)
+Top5_existing_route$bicycle_godutch = Top5_existing$bicycle +
+  round(Top5_existing_route$uptakegodutch * Top5_existing$all)
+
+sum(Top5_existing_route$bicycle_godutch) - sum(Top5_existing$bicycle)
+
+sum(Top5_existing_route$bicycle_godutch) / sum(Top5_existing$all)
+sum(Top5_existing$bicycle) / sum(Top5_existing$all)
+#18.9% to 62% (GovTarget Existing) additional 120 people cycling
+
+
+
+#prioritise infras
+library(Rnets)
+library(pbapply)
+rnet_5 = stplanr::overline2(tpo_5, attrib = c("bicycle", "govtarget_slc"))
+lwd = rnet$govtarget_slc / mean(rnet$govtarget_slc)
+
+rnet_100 = stplanr::overline2(top_desire_line_100, attrib = c("bicycle", "govtarget_slc"))
+lwd = rnet_100$govtarget_slc / mean(rnet$govtarget_slc)
+
+plot (L$geometry)
+plot(rnet_5["govtarget_slc"], lwd = lwd, add = TRUE)
+
+mapview::mapview(rnet, zcol = "govtarget_slc", lwd = lwd * 2)
+mapview::mapview(rnet_100, zcol = "govtarget_slc", lwd = lwd * 2)
+
+#stintersect # sf #health statistics
+#export as a csv and bring it back in
+st_intersection()
+
 
 #difference between gradient and distance
 
@@ -184,91 +230,73 @@ ggplot(uptake_df) +
   )) +
   scale_color_discrete("Gradient (%)")
 
-#convert top 300 into routes
-desire_300 <- line2route(LSOA_300, route_osrm, time_delay = 1)
-qtm(desire_lines)
-warnings()
 
-#convert top route
-top_desire_line = L_original_lsoa %>% top_n(1, bicycle)
-top_desire_line <- line2route(top_desire_line, route_osrm, time_delay = 1)
-qtm(top_desire_line)
+#calculate MET equivalent per week
 
-#convert top 5 routes lSOA
-top_5 = stplanr::line2route(desire_5, route_fun = stplanr::route_cyclestreet)
-qtm(top_5)
-
-#convert top 50 routes lSOA
-top_50 = L_original_lsoa %>% top_n(50, bicycle)
-
-cyclestreet_50 = stplanr::line2route(top_50, route_fun = stplanr::route_cyclestreet)
-qtm(cyclestreet_50)
-
-
-#estimate cycling uptake govtarget top 5
-
-top_5$uptakegovtarget = uptake_pct_govtarget(distance = top_5$length, gradient = top_5$av_incline)
-#> Distance assumed in m, switching to km
-top_5$bicycle_govtarget = desire_5$bicycle +
-  round(top_5$uptake * desire_5$all)
-
-sum(top_5$bicycle_govtarget) - sum(desire_5$bicycle)
-
-sum(top_5$bicycle_govtarget) / sum(desire_5$all)
-sum(desire_5$bicycle) / sum(desire_5$all)
-#18.9% to 26.6% (GovTarget)
-
-#estimate cycling uptake godutch top 5
-
-top_5$uptakegodutch = uptake_pct_godutch(distance = top_5$length, gradient = top_5$av_incline)
-#> Distance assumed in m, switching to km
-top_5$bicycle_godutch = desire_5$bicycle +
-  round(top_5$uptake * desire_5$all)
-
-
-sum(desire_5$govtarget_slc) - sum(desire_5$bicycle)
+Top5_godutch_route$'Cycling Uptake' <- Top5_godutch$dutch_slc - Top5_godutch$bicycle
 
 
 
-#cycling uptake gove target top 50
-cyclestreet_50$uptake = uptake_pct_govtarget(distance = cyclestreet_50$length, gradient = cyclestreet_50$av_incline)
-#> Distance assumed in m, switching to km
-cyclestreet_50$bicycle_govtarget = top_50$bicycle +
-  round(cyclestreet_50$uptake * top_50$all)
 
-sum(cyclestreet_50$bicycle_govtarget) - sum(top_50$bicycle)
-  
+#health indicators
+health_csv <- read_csv("C:/Users/Holly.Mizser-Jones/Documents/UCL/CASA005/Assessment/Census Data/liverpool_health.csv")
 
-#comparison between the data
-sum(desire_5$bicycle) / sum(desire_5$all)
-sum(desire_5$dutch_slc) / sum(desire_5$all)
-sum(desire_5$govtarget_slc) -  sum(desire_5$bicycle)
-sum(desire_5$gendereq_slc) / sum(desire_5$all)
-sum(desire_5$ebike_slc) / sum(desire_5$all)
+#merge health indicators with LSOA
+HealthMerge <-merge (L, 
+                     health_csv, 
+                     by.x="geo_code", 
+                     by.y="area_code",
+                     no.dups = TRUE)
+
+#plot health indicators
+library(tmap)
+library(tmaptools)
+tmap_mode("view")
+
+qtm(HealthMerge,
+    fill = "% Very good health") +
+  qtm(Top5_existing_route)
 
 
 
-sum(top300$bicycle) / sum(top300$all)
-sum(top300$dutch_slc) / sum(top300$all)
-sum(top300$govtarget_slc) / sum(top300$all)
-sum(top300$gendereq_slc) / sum(top300$all)
-sum(top300$ebike_slc) / sum(top300$all)
 
-sum(L_original_lsoa$bicycle) / sum(L_original_lsoa$all)
-sum(L_original_lsoa$dutch_slc) / sum(L_original_lsoa$all)
+tm_shape(HealthMerge) +
+  tm_polygons(c("Very good health", "Very bad health"), 
+              style=c("jenks", "pretty"),
+              palette=list("YlOrBr", "Purples"),
+              auto.palette.mapping=FALSE,
+              title=c("Very Good Health", "Very Bad Health"))
 
-#prioritise infras
-library(Rnets)
-library(pbapply)
-rnet_5 = stplanr::overline2(tpo_5, attrib = c("bicycle", "govtarget_slc"))
-lwd = rnet$govtarget_slc / mean(rnet$govtarget_slc)
+tmaptools::palette_explorer()
 
-rnet_100 = stplanr::overline2(top_desire_line_100, attrib = c("bicycle", "govtarget_slc"))
-lwd = rnet_100$govtarget_slc / mean(rnet$govtarget_slc)
+tm_shape(HealthMerge) +
+  tm_polygons(c("Very good health", "Very bad health"), 
+              style=c("jenks", "pretty"),
+              palette=list("YlOrBr", "Purples"),
+              auto.palette.mapping=FALSE,
+              title=c("Very Good Health", "Very Bad Health"))
 
-plot (L$geometry)
-plot(rnet["govtarget_slc"], lwd = lwd, add = TRUE)
+plot(L$geomtry)
+plot(LSOA_5["bicycle"], add = TRUE, col = "red")
 
-mapview::mapview(rnet, zcol = "govtarget_slc", lwd = lwd * 2)
-mapview::mapview(rnet_100, zcol = "govtarget_slc", lwd = lwd * 2)
-    
+
+tm_shape(HealthMerge) +
+  tm_polygons(c("% Very good health", "% Very bad health"), 
+              style=c("cont", "cont"),
+              palette=list("YlOrBr", "Purples"),
+              auto.palette.mapping=FALSE,
+              title=c("% Very Good Health", "% Very Bad Health"))
+
+
+remove(Liverpoolmap)
+
+str(HealthMerge)
+
+library(geosphere)
+HealthMerge$area <- areaPolygon(HealthMerge)
+HealthMerge$areasqkm <- HealthMerge$area / 1000000
+
+st_intersects(x = Top5_existing_route, y = HealthMerge, sparse = TRUE)
+
+
+
