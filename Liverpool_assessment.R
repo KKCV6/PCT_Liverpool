@@ -321,9 +321,6 @@ Top10_dutch_route$'increase in physical expenditure (dutch)' <- (Top10_dutch_rou
 
 str(Top10_Liverpool_route)
 
-?register_google
-google_api <- "AIzaSyBifB_N-PlGWOQDAdNEjImiaDk0Hpz8CLg"
-register_google(key = "AIzaSyBifB_N-PlGWOQDAdNEjImiaDk0Hpz8CLg", write = TRUE)
 
 str(lines)
 
