@@ -38,7 +38,6 @@ L_original_lsoa = get_pct_lines("liverpool-city-region", geography = "lsoa")
 
 Liverpool_filter = filter(L_original_lsoa, lad_name1 %in% c("Liverpool")) # filter out Liverpool only
 
-
 tmap_mode("view")
 
 #Bicycle Dependent Desire Lines
@@ -60,12 +59,8 @@ tm_shape(car_dependent) +
 
 #top 10 OD desire lines cycled in Liverpool (existing, Government Target and Go Dutch)
 Top10_Liverpool = Liverpool_filter %>% top_n(10, bicycle)
-Top10_gov = Liverpool_filter %>% top_n(10, govtarget_slc)
-Top10_dutch = Liverpool_filter %>% top_n(10, dutch_slc)
 
 Top10_Liverpool_data = Top10_Liverpool %>% select(id, geo_code1, geo_code2, geo_name1, geo_name2, lad11cd1, lad11cd2, lad_name1, lad_name2, all, bicycle, foot, car_driver, car_passenger, motorbike, train_tube, bus, taxi_other, govtarget_slc, dutch_slc)
-Top10_gov_data = Top10_gov %>% select(id, geo_code1, geo_code2, geo_name1, geo_name2, lad11cd1, lad11cd2, lad_name1, lad_name2, all, bicycle, foot, car_driver, car_passenger, motorbike, train_tube, bus, taxi_other, govtarget_slc, dutch_slc)
-Top10_dutch_data = Top10_dutch %>% select(id, geo_code1, geo_code2, geo_name1, geo_name2, lad11cd1, lad11cd2, lad_name1, lad_name2, all, bicycle, foot, car_driver, car_passenger, motorbike, train_tube, bus, taxi_other, govtarget_slc, dutch_slc)
 
 #turn the OD desire lines into routes
 
@@ -73,17 +68,6 @@ Top10_Liverpool_route = stplanr::line2route(Top10_Liverpool_data, route_fun = st
 Top10_Liverpool_route$govtarget = Top10_Liverpool_data$govtarget_slc
 Top10_Liverpool_route$dutch = Top10_Liverpool_data$dutch_slc
 Top10_Liverpool_route$bicycle <- Top10_Liverpool_data$bicycle
-
-Top10_gov_route = stplanr::line2route(Top10_gov_data, route_fun = stplanr::route_cyclestreet)
-Top10_gov_route$govtarget = Top10_gov_data$govtarget_slc
-Top10_gov_route$dutch = Top10_gov_data$dutch_slc
-Top10_gov_route$bicycle <- Top10_gov_data$bicycle
-
-
-Top10_dutch_route = stplanr::line2route(Top10_dutch_data, route_fun = stplanr::route_cyclestreet)
-Top10_dutch_route$govtarget = Top10_dutch_data$govtarget_slc
-Top10_dutch_route$dutch = Top10_dutch_data$dutch_slc
-Top10_dutch_route$bicycle <- Top10_dutch_data$bicycle
 
 #estimate cycling uptake (Liverpool)
 
