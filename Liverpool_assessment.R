@@ -159,8 +159,8 @@ IMDandroutes<- leaflet() %>%
             group=c("Health Deprivation and Disability Decile"), 
             position ="bottomleft",
             title ="HDD Decile")%>%
-  
-  #add routes
+
+#add routes
   addPolylines(data=Top10_Liverpool_route, color = "black", 
                weight = 2.5, opacity = 1, group = c("Top 10 Cycle Routes in Liverpool")) %>%
   
