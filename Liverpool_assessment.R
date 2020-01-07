@@ -10,7 +10,6 @@ pkgs = c(
   "devtools"
 )
 
-library(cyclestreets)
 library(mapview)
 library(pct)
 library(sf)
@@ -24,11 +23,12 @@ library(dplyr)
 library(leaflet)
 library(classInt)
 library(ggplot2)
+library(cyclestreets)
 
 remotes::install_cran(pkgs)
 # remotes::install_github("ITSLeeds/pct")
 
-#install Liverpool data and geometry
+#install Liverpool data and geometry from PCT
 
 region_name = "liverpool-city-region"
 max_distance = 7
@@ -140,7 +140,7 @@ IMDandroutes<- leaflet() %>%
   addLegend(pal = pal, 
             values = Liverpool_filter_shp$IMD_Decile,
             group=c("Index of Multiple Deprivation"), 
-            title ="IMD",
+            title ="IMD Decile",
             position ="bottomleft")%>%
   
   #add our ward polygons, linking to the tables we just made
@@ -158,7 +158,7 @@ IMDandroutes<- leaflet() %>%
             values = Liverpool_filter_shp$HDDDec,
             group=c("Health Deprivation and Disability Decile"), 
             position ="bottomleft",
-            title ="HDD Rank")%>%
+            title ="HDD Decile")%>%
   
   #add routes
   addPolylines(data=Top10_Liverpool_route, color = "black", 
@@ -177,11 +177,13 @@ IMDandroutes
 #intersect the Top Routes with the IMD polygon data
 IMD_route_intersect <- st_join(Top10_Liverpool_route, Liverpool_filter_shp, join = st_intersects)
 
+qtm(Top10_Liverpool_route)
+
 #export this to csv and use Microsoft Excel to calculate the average for each route
-write.csv(IMD_route_intersect,"C:/Users/Holly.Mizser-Jones/Documents/UCL/CASA005/Assessment//IMD_route_average.csv", row.names = FALSE)
+write.csv(IMD_route_intersect,"C:/Users/Holly.Mizser-Jones/OneDrive - Arup/UCL/CASA005/Assessment/Data//IMD_route_average.csv", row.names = FALSE)
 
 #read the IMD average back into R
-IMD_route_average <- read.csv("C:/Users/Holly.Mizser-Jones/Documents/UCL/CASA005/Assessment/IMD_average.csv")
+IMD_route_average <- read.csv("C:/Users/Holly.Mizser-Jones/OneDrive - Arup/UCL/CASA005/Assessment/Data/IMD_average.csv")
 
 #merge with the route data 
 route_merge <-merge (Top10_Liverpool_route, 
@@ -189,6 +191,9 @@ route_merge <-merge (Top10_Liverpool_route,
                      by.x="length", 
                      by.y="length",
                      no.dups = TRUE)
+
+st_write(route_merge,
+         "C:/Users/Holly.Mizser-Jones/OneDrive - Arup/UCL/CASA005/Assessment/Jan2020/route_merge.shp", driver = "ESRI Shapefile")
 
 #the change in mMETS was calculated in excel, the below code joins the resultant increases to the routes
 
@@ -199,9 +204,12 @@ mMET <- read.csv("C:/Users/Holly.Mizser-Jones/OneDrive - Arup/UCL/CASA005/Assess
 #merge mMET with Routes
 route_mMET <-merge (route_merge, 
                     mMET, 
-                    by.x="Route", 
+                    by.x="route", 
                     by.y="Route",
                     no.dups = TRUE)
+
+st_write(route_mMET,
+         "C:/Users/Holly.Mizser-Jones/OneDrive - Arup/UCL/CASA005/Assessment/Jan2020/mMET_merge.shp", driver = "ESRI Shapefile")
 
 #Sensitivity Test
 
@@ -227,7 +235,7 @@ Top10_dutch_route$bicycle <- Top10_dutch_data$bicycle
 
 #export as shapefiles
 st_write(Top10_Liverpool_route,
-         "C:/Users/Holly.Mizser-Jones/OneDrive - Arup/UCL/CASA005/Assessment/RMark/Top10_liverpool_route.shp", driver = "ESRI Shapefile")
+         "C:/Users/Holly.Mizser-Jones/OneDrive - Arup/UCL/CASA005/Assessment/Jan2020/Top10_liverpool_route.shp", driver = "ESRI Shapefile")
 st_write(Top10_gov_route,
          "C:/Users/Holly.Mizser-Jones/OneDrive - Arup/UCL/CASA005/Assessment/Shp/Top10_gov_bng.shp", driver = "ESRI Shapefile")
 st_write(Top10_dutch_route,
