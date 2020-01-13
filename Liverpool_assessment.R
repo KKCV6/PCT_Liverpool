@@ -47,7 +47,8 @@ bicycle = Liverpool_filter %>%
   filter(e_dist_km < max_distance)
 tm_shape(bicycle) +
   tm_lines("Percentage Cycling", palette = "RdYlBu", lwd = "bicycle", scale = 9) +
-  tm_scale_bar(position = c("left", "bottom"))
+  tm_scale_bar(position = c("left", "bottom"))+
+  tm_compass()
 
 #Car Dependent Desire Lines
 car_dependent = Liverpool_filter %>% 
@@ -123,6 +124,10 @@ library(leaflet)
 
 pal <- colorFactor(get_brewer_pal("-YlGnBu", n = 10), domain = Liverpool_filter_shp$IMD_Decile, n = 10)
 pal2 <- colorFactor(get_brewer_pal("-YlGnBu", n = 10), domain = Liverpool_filter_shp$HDDDec, n = 10)
+popIMD <- leafpop::popupTable(Liverpool_filter_shp, zcol=c("IMD_Decile"))
+popHDD <- leafpop::popupTable(Liverpool_filter_shp, zcol=c("HDDDec"))
+poproutes <- leafpop::popupTable(route_merge, zcol=c("route", "Imd.Average", "HDD.Average"))
+
 
 IMDandroutes<- leaflet() %>%
   # add basemap options
@@ -136,6 +141,7 @@ IMDandroutes<- leaflet() %>%
               opacity = 1,
               dashArray = "3",
               fillOpacity = 0.6,
+              popup = popIMD,
               fillColor = ~pal(Liverpool_filter_shp$IMD_Decile),
               group = "Index of Multiple Deprivation")%>%
   
@@ -153,6 +159,7 @@ IMDandroutes<- leaflet() %>%
               opacity = 1,
               dashArray = "3",
               fillOpacity = 0.6,
+              popup = popHDD,
               fillColor = ~pal2(Liverpool_filter_shp$HDDDec),
               group = "Health Deprivation and Disability Decile")%>%
   
@@ -164,8 +171,8 @@ IMDandroutes<- leaflet() %>%
             title ="HDD Decile")%>%
 
 #add routes
-  addPolylines(data=Top10_Liverpool_route, color = "black", 
-               weight = 2.5, opacity = 1, group = c("Top 10 Cycle Routes in Liverpool")) %>%
+  addPolylines(data=route_merge, color = "black", 
+               weight = 2.5, opacity = 1, popup = poproutes, group = c("Top 10 Cycle Routes in Liverpool")) %>%
   
   # specify layers control
   addLayersControl(
