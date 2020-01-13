@@ -39,21 +39,24 @@ L_original_lsoa = get_pct_lines("liverpool-city-region", geography = "lsoa")
 Liverpool_filter = filter(L_original_lsoa, lad_name1 %in% c("Liverpool")) # filter out Liverpool only
 
 tmap_mode("view")
+tmap_options(qtm.scalebar = TRUE)
 
 #Bicycle Dependent Desire Lines
 bicycle = Liverpool_filter %>%
   mutate('Percentage Cycling' = (bicycle) / all * 100) %>%
   filter(e_dist_km < max_distance)
 tm_shape(bicycle) +
-  tm_lines("Percentage Cycling", palette = "RdYlBu", lwd = "bicycle", scale = 9)
+  tm_lines("Percentage Cycling", palette = "RdYlBu", lwd = "bicycle", scale = 9) +
+  tm_scale_bar(position = c("left", "bottom"))
 
 #Car Dependent Desire Lines
 car_dependent = Liverpool_filter %>% 
   mutate(`Percent Drive` = (car_driver) / all * 100) %>% 
   filter(e_dist_km < max_distance)
 tm_shape(car_dependent) +
-  tm_lines("Percent Drive", palette = "-RdYlBu", lwd = "all", scale = 9)+
-  tm_layout(legend.text.size = 1.2)
+  tm_lines("Percent Drive", palette = "RdYlBu", lwd = "all", scale = 9)+
+  tm_layout(legend.text.size = 1.2)+
+  tm_scale_bar(position = c("left", "bottom"))
 
 #note: these desire lines can be created for any travel mode, adapt the code above to show desired mode
 
